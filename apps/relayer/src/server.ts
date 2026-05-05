@@ -193,7 +193,6 @@ async function getFx(pair: 'USDC/USD' | 'SOL/USD') {
     pythUsdcUsdCache = { fetchedAtMs: now, asOfMs, rate }
     return { pair, rate, provider: 'PYTH_LIVE' as const, asOfMs }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn('Pyth Hermes fetch failed; falling back to mockFx', e instanceof Error ? e.message : String(e))
     return mockFx(pair)
   }
@@ -390,7 +389,6 @@ app.post('/api/claim', async (req, res) => {
   const receiverPubkey = parsed.data.receiverPubkey ?? rem.senderPubkey ?? 'DEMO_RECEIVER'
   if (rem.paymentSource === 'SOLANA_WALLET' && rem.escrowPda && rem.senderPubkey) {
     await releaseFunds(rem.escrowPda, rem.senderPubkey, receiverPubkey, rem.claimToken).catch((error) => {
-      // eslint-disable-next-line no-console
       console.warn(
         'best-effort releaseFunds failed (demo continues anyway)',
         error instanceof Error ? error.message : String(error),
@@ -403,7 +401,6 @@ app.post('/api/claim', async (req, res) => {
     try {
       nftTx = await mintReceiptNft(parsed.data.receiverPubkey, rem.amount, rem.payoutCurrency)
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.warn(
         'best-effort mintReceiptNft failed (demo continues anyway)',
         error instanceof Error ? error.message : String(error),
@@ -421,7 +418,7 @@ app.post('/api/claim', async (req, res) => {
 
 function sanitize(rem: any) {
   // never return token via normal status endpoints
-  const { claimToken, ...rest } = rem
+  const { claimToken: _claimToken, ...rest } = rem
   return rest
 }
 
@@ -448,17 +445,14 @@ setInterval(async () => {
         fx,
       })
       schedule.nextRunMs = Date.now() + schedule.intervalDays * 86400000
-      // eslint-disable-next-line no-console
       console.log(`Auto-created remittance for recurring schedule ${schedule.id}`)
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(`Recurring auto-create failed for ${schedule.id}`, e instanceof Error ? e.message : String(e))
     }
   }
 }, 60_000)
 
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`relayer listening on http://localhost:${PORT}`)
 })
 

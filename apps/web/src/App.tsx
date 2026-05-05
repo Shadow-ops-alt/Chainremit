@@ -384,6 +384,43 @@ function CompetitorLogo({ name }: { name: 'WU' | 'MG' | 'WISE' | 'BANK' | 'REMIT
   return <span className="logo" style={{ background: c.bg, color: c.fg }}>{c.text}</span>
 }
 
+function SavingsRacingBar({
+  label,
+  val,
+  max,
+  logo,
+  you,
+}: {
+  label: string
+  val: number
+  max: number
+  logo: 'WU' | 'MG' | 'WISE' | 'REMIT'
+  you?: boolean
+}) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px', alignItems: 'center', gap: 12, padding: '6px 0' }}>
+      <div className="row" style={{ gap: 8, fontSize: 12, color: you ? 'var(--fg-0)' : 'var(--fg-2)' }}>
+        <CompetitorLogo name={logo} />
+        {label}
+      </div>
+      <div style={{ height: 8, background: 'var(--bg-2)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
+        <div
+          style={{
+            height: '100%',
+            width: `${(val / max) * 100}%`,
+            background: you ? 'var(--accent-grad)' : 'var(--bg-4)',
+            borderRadius: 999,
+            transition: 'width 600ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+          }}
+        />
+      </div>
+      <div className="mono tnum" style={{ textAlign: 'right', fontSize: 13, color: you ? 'var(--fg-0)' : 'var(--fg-2)' }}>
+        NPR {val.toLocaleString()}
+      </div>
+    </div>
+  )
+}
+
 function SavingsBar({ usd, npr, variant = 'racing' }: { usd: number; npr: number; variant?: 'default' | 'racing' | 'minimal' }) {
   const wu = Math.round(npr * (1 - 0.067))
   const mg = Math.round(npr * (1 - 0.052))
@@ -392,38 +429,16 @@ function SavingsBar({ usd, npr, variant = 'racing' }: { usd: number; npr: number
 
   if (variant === 'racing') {
     const max = npr || 1
-    const Bar = ({ label, val, logo, you }: { label: string; val: number; logo: 'WU' | 'MG' | 'WISE' | 'REMIT'; you?: boolean }) => (
-      <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px', alignItems: 'center', gap: 12, padding: '6px 0' }}>
-        <div className="row" style={{ gap: 8, fontSize: 12, color: you ? 'var(--fg-0)' : 'var(--fg-2)' }}>
-          <CompetitorLogo name={logo} />
-          {label}
-        </div>
-        <div style={{ height: 8, background: 'var(--bg-2)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
-          <div
-            style={{
-              height: '100%',
-              width: `${(val / max) * 100}%`,
-              background: you ? 'var(--accent-grad)' : 'var(--bg-4)',
-              borderRadius: 999,
-              transition: 'width 600ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-            }}
-          />
-        </div>
-        <div className="mono tnum" style={{ textAlign: 'right', fontSize: 13, color: you ? 'var(--fg-0)' : 'var(--fg-2)' }}>
-          NPR {val.toLocaleString()}
-        </div>
-      </div>
-    )
     return (
       <div className="savings">
         <div className="savings-head">
           <span className="badge">YOU SAVE</span>
           <span>vs other services for ${usd} sent</span>
         </div>
-        <Bar label="ChainRemit" val={npr} logo="REMIT" you />
-        <Bar label="Wise" val={wise} logo="WISE" />
-        <Bar label="MoneyGram" val={mg} logo="MG" />
-        <Bar label="Western Union" val={wu} logo="WU" />
+        <SavingsRacingBar label="ChainRemit" val={npr} max={max} logo="REMIT" you />
+        <SavingsRacingBar label="Wise" val={wise} max={max} logo="WISE" />
+        <SavingsRacingBar label="MoneyGram" val={mg} max={max} logo="MG" />
+        <SavingsRacingBar label="Western Union" val={wu} max={max} logo="WU" />
         <div className="savings-foot">
           <span className="label">Extra in their pocket vs Western Union</span>
           <span className="value">+ NPR {savedVsWU.toLocaleString()}</span>
@@ -1360,6 +1375,7 @@ function Recurring() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh()
   }, [])
 
@@ -1519,6 +1535,7 @@ function History() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh()
   }, [])
 
@@ -2083,7 +2100,6 @@ function KYCFlow() {
           onNext={() => {
             // Combine dial code + local digits when advancing past the phone step.
             // (Demo only — no backend yet; stored in state and shown on the OTP screen.)
-            // eslint-disable-next-line no-console
             console.info('KYC submit phone:', fullPhone)
             goNext()
           }}

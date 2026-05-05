@@ -38,14 +38,12 @@ export async function mintReceiptNft(recipientWallet: string, amount: string, cu
   const collectionMint = process.env.COLLECTION_MINT
 
   if (!treeAddress || !collectionMint) {
-    // eslint-disable-next-line no-console
     console.warn('MERKLE_TREE_ADDRESS or COLLECTION_MINT not set; skipping receipt NFT mint')
     return null
   }
 
   const relayerSecretKey = parseRelayerKeypair()
   if (!relayerSecretKey) {
-    // eslint-disable-next-line no-console
     console.warn('RELAYER_PRIVATE_KEY not set; skipping receipt NFT mint')
     return null
   }
@@ -89,7 +87,6 @@ export async function mintReceiptNft(recipientWallet: string, amount: string, cu
     // Leaf parsing is best-effort only; signature is still useful for explorer.
   }
 
-  // eslint-disable-next-line no-console
   console.info('Minted ChainRemit receipt cNFT', { recipientWallet, attributes, receiptNonce: receiptNonce.publicKey })
 
   return base58.deserialize(txResult.signature)[0]

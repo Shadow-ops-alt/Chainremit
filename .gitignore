@@ -14,5 +14,7 @@ target
 test-ledger
 
 # setup md
-
 SETUP.md
+
+# Claude Code workspace
+.claude/

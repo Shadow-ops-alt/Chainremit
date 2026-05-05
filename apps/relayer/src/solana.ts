@@ -79,7 +79,6 @@ export async function releaseFunds(
 ) {
   const relayerKeypair = parseRelayerKeypair()
   if (!relayerKeypair) {
-    // eslint-disable-next-line no-console
     console.warn(
       'DEMO MODE: RELAYER_PRIVATE_KEY not set; skipping on-chain releaseFunds and returning mock signature',
     )
