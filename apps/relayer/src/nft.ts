@@ -1,4 +1,4 @@
-import { clusterApiUrl, Keypair } from '@solana/web3.js'
+import { clusterApiUrl } from '@solana/web3.js'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import {
   mplBubblegum,
@@ -7,31 +7,12 @@ import {
 } from '@metaplex-foundation/mpl-bubblegum'
 import {
   createSignerFromKeypair,
-  generateSigner,
   keypairIdentity,
   publicKey,
   type PublicKey,
 } from '@metaplex-foundation/umi'
 import { base58 } from '@metaplex-foundation/umi/serializers'
-
-function parseRelayerKeypair() {
-  const raw = process.env.RELAYER_PRIVATE_KEY
-  if (!raw) return null
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    throw new Error('RELAYER_PRIVATE_KEY must be valid JSON array')
-  }
-  if (!Array.isArray(parsed)) {
-    throw new Error('RELAYER_PRIVATE_KEY must be a JSON array')
-  }
-
-  const secret = Uint8Array.from(parsed as number[])
-  const kp = Keypair.fromSecretKey(secret)
-  return kp.secretKey
-}
+import { parseRelayerKeypair } from './keypair.js'
 
 export async function mintReceiptNft(recipientWallet: string, amount: string, currency: string) {
   const treeAddress = process.env.MERKLE_TREE_ADDRESS
@@ -42,18 +23,18 @@ export async function mintReceiptNft(recipientWallet: string, amount: string, cu
     return null
   }
 
-  const relayerSecretKey = parseRelayerKeypair()
-  if (!relayerSecretKey) {
+  const relayerKeypair = parseRelayerKeypair()
+  if (!relayerKeypair) {
     console.warn('RELAYER_PRIVATE_KEY not set; skipping receipt NFT mint')
     return null
   }
+  const relayerSecretKey = relayerKeypair.secretKey
 
   const umi = createUmi(process.env.SOLANA_RPC_URL ?? clusterApiUrl('devnet')).use(mplBubblegum())
   const umiKeypair = umi.eddsa.createKeypairFromSecretKey(relayerSecretKey)
   const signer = createSignerFromKeypair(umi, umiKeypair)
   umi.use(keypairIdentity(umiKeypair))
   umi.payer = signer
-  const receiptNonce = generateSigner(umi)
   const attributes = [
     { trait_type: 'Amount', value: amount },
     { trait_type: 'Currency', value: currency },
@@ -67,7 +48,9 @@ export async function mintReceiptNft(recipientWallet: string, amount: string, cu
     metadata: {
       name: 'ChainRemit Receipt',
       symbol: 'CRMIT',
-      uri: 'https://chainremit.app/nft-metadata.json',
+      uri:
+        process.env.NFT_METADATA_URI ??
+        'https://raw.githubusercontent.com/your-org/chainremit/main/nft-metadata.json',
       sellerFeeBasisPoints: 0,
       creators: [
         {
@@ -87,7 +70,7 @@ export async function mintReceiptNft(recipientWallet: string, amount: string, cu
     // Leaf parsing is best-effort only; signature is still useful for explorer.
   }
 
-  console.info('Minted ChainRemit receipt cNFT', { recipientWallet, attributes, receiptNonce: receiptNonce.publicKey })
+  console.info('Minted ChainRemit receipt cNFT', { recipientWallet, attributes })
 
   return base58.deserialize(txResult.signature)[0]
 }

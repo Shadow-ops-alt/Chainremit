@@ -1221,9 +1221,7 @@ function Receive() {
   const fx = useFxRate()
 
   const initialClaimToken =
-    typeof window !== 'undefined' && window.location.hash.startsWith('#')
-      ? window.location.hash.slice(1).trim()
-      : ''
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('token')?.trim() ?? '' : ''
   const [token, setToken] = useState(initialClaimToken)
   const [claimed, setClaimed] = useState<{ remittance: Remittance; next: string; nftTx: string | null } | null>(null)
   const [error, setError] = useState<string | null>(null)

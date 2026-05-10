@@ -21,7 +21,19 @@ const sessions = new Map<string, { expiresAtMs: number; createdAtMs: number }>()
 const loginAttempts = new Map<string, { count: number; resetAtMs: number }>()
 const releaseAttempts = new Map<string, { count: number; resetAtMs: number }>()
 
-app.use(cors({ origin: true }))
+const allowedOrigins = (process.env.WEB_BASE_URL ?? 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true,
+  }),
+)
 app.use(express.json({ limit: '256kb' }))
 
 function cookieValue(req: Request, key: string) {
@@ -307,7 +319,7 @@ app.post('/api/remittances', async (req, res) => {
 
   res.json({
     remittance: sanitize(rem),
-    claimUrl: `${WEB_BASE_URL}/claim#${rem.claimToken}`,
+    claimUrl: `${WEB_BASE_URL}/claim?token=${rem.claimToken}`,
   })
 })
 
@@ -357,9 +369,18 @@ app.get('/api/agent/remittances', requireAgentSession, (_req, res) => {
 })
 
 app.post('/api/remittances/:id/cancel', (req, res) => {
-  const rem = store.cancel(req.params.id)
+  const remittanceId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+  const rem = store.get(remittanceId)
   if (!rem) return res.status(404).json({ error: 'not_found' })
-  res.json({ remittance: sanitize(rem) })
+
+  const senderPubkey = typeof req.body?.senderPubkey === 'string' ? req.body.senderPubkey.trim() : ''
+  if (!senderPubkey || rem.senderPubkey !== senderPubkey) {
+    return res.status(403).json({ error: 'forbidden' })
+  }
+
+  const cancelled = store.cancel(remittanceId)
+  if (!cancelled) return res.status(409).json({ error: 'not_cancellable' })
+  res.json({ remittance: sanitize(cancelled) })
 })
 
 app.post('/api/remittances/:id/agent-release', requireAgentSession, (req, res) => {

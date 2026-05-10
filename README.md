@@ -1,47 +1,108 @@
 # ChainRemit
 
-ChainRemit is a Solana-powered remittance demo focused on fast, low-cost transfers for users sending money home. The app shows a wallet-style dashboard, remittance creation flow, receiver claim demo, recurring transfers, activity tracking, and an agent console for assisted cash-out workflows.
+**Fast, low-cost global remittances powered by Solana.**
 
-This project is built as a monorepo with a web client, relayer logic, and an escrow program.
+ChainRemit lets anyone send money home in seconds using Solana's on-chain escrow — with near-zero fees, real-time FX rates via Pyth, and a compressed NFT receipt for every transfer. Built for the Colosseum Frontier Hackathon.
 
-## Overview
+## The problem
 
-ChainRemit demonstrates a remittance flow where a sender can create a transfer, lock funds through an escrow-style flow, and allow a recipient or agent-assisted receiver to claim the payout.
+Global remittances are a $800B/year market. Traditional services (Western Union, MoneyGram) charge 5–7% in fees and take 2–5 days to settle. For families in Nepal, the Philippines, and similar high-remittance corridors, those fees are a significant tax on the money they rely on.
 
-The current version is designed for development and demo use.
+## Our insight
+
+Solana's sub-second finality and ~$0.00025/tx fees make on-chain hash-locked escrow a practical reality — not a research project. A sender locks SOL or USDC into an Anchor escrow PDA; the receiver (or an agent on their behalf) claims it with a one-time token. The relayer mints a Bubblegum compressed NFT as a tamper-proof receipt. No bank account required.
+
+## Market size
+
+Nepal alone receives ~$9B/year in remittances (~26% of GDP). South/Southeast Asia and Sub-Saharan Africa together represent hundreds of billions annually. Capturing even 0.5% of this volume at a 0.5% fee is a $2B+ revenue opportunity.
+
+## Business model
+
+The relayer is the monetization layer — a small FX spread or per-transfer flat fee collected server-side, with the on-chain escrow remaining fully transparent and auditable.
 
 ## Features
 
-- Wallet overview dashboard
-- Send money flow
-- Activity history
-- Recurring remittance demo
-- Receiver claim screen
-- Agent console with PIN-gated access
-- Solana devnet-focused workflow
-- Escrow-oriented transfer model
-- Minimal dark UI with responsive layouts
+- Wallet-connected send flow (Phantom, Backpack, etc.)
+- Hash-locked Anchor escrow — create / claim / cancel
+- Live USD/NPR FX rate (averaged from two sources, cached 60 s)
+- Pyth oracle USDC/USD price feed
+- Recurring remittance scheduler
+- QR-code claim link for cash-out
+- Agent console with PIN-gated access and session management
+- Metaplex Bubblegum cNFT receipt on every claim
+- Solana devnet — program ID: `2AeboQZoaSyBoC2YRcVHvL9CYh5embbddQ6pFubCKdoZ`
 
-## Tech Stack
+## Tech stack
 
-- React
-- Vite
-- TypeScript
-- Node.js
-- Solana Web3.js
-- Anchor
-- Metaplex UMI
-- npm workspaces
+- React 19, Vite, TypeScript
+- Node.js, Express 5, Zod
+- Solana Web3.js, Anchor 0.32, @coral-xyz/anchor
+- Metaplex UMI + mpl-bubblegum (compressed NFTs)
+- Pyth Hermes price API
+- npm workspaces monorepo
 
-## Project Structure
+## Project structure
 
-```txt
-chain-remit/
+```
+Chainremit/
 ├── apps/
-│   ├── web/          # Frontend application
-│   └── relayer/      # Relayer and Solana interaction logic
+│   ├── web/       # React frontend
+│   └── relayer/   # Express API + Solana relayer + NFT minting
 ├── programs/
-│   └── escrow/       # Anchor escrow program
+│   └── escrow/    # Anchor escrow program (Rust)
 ├── package.json
-├── package-lock.json
 └── README.md
+```
+
+## Local setup
+
+### Prerequisites
+- Node.js 20+
+- Rust + Solana CLI + Anchor CLI (for program development)
+
+### 1. Install dependencies
+```bash
+cd Chainremit
+npm install
+```
+
+### 2. Configure the relayer
+```bash
+cp apps/relayer/.env.example apps/relayer/.env
+# Edit apps/relayer/.env and fill in your values (see .env.example for instructions)
+```
+
+### 3. Run in development
+```bash
+npm run dev          # starts both relayer (port 8787) and web (port 5173)
+npm run dev:web      # web only
+npm run dev:relayer  # relayer only
+```
+
+### 4. Build for production
+```bash
+npm run build
+```
+
+## Deploying
+
+### Relayer
+Deploy `apps/relayer` to Railway, Render, or Fly.io.
+Set all env vars from `.env.example` in your hosting dashboard.
+Start command: `node dist/server.js`
+
+### Frontend
+Deploy `apps/web` to Vercel (auto-detects Vite).
+Set `VITE_RELAYER_URL` to your deployed relayer URL.
+
+### Anchor program
+Already deployed on devnet. For mainnet:
+```bash
+anchor deploy --provider.cluster mainnet-beta
+```
+
+## Environment variables
+
+See `apps/relayer/.env.example` for the full list with descriptions.
+
+---

@@ -7,6 +7,7 @@ export type PaymentSource = 'FIAT' | 'SOLANA_WALLET'
 export type Remittance = {
   id: string
   createdAtMs: number
+  expiresAtMs: number
   amount: string
   asset: Asset
   paymentSource: PaymentSource
@@ -48,11 +49,12 @@ export class RemittanceStore {
   private remittances = new Map<string, Remittance>()
   private claimTokenToId = new Map<string, string>()
 
-  create(input: Omit<Remittance, 'id' | 'createdAtMs' | 'status'>): Remittance {
+  create(input: Omit<Remittance, 'id' | 'createdAtMs' | 'expiresAtMs' | 'status'>): Remittance {
     const id = randomId('rem')
     const rem: Remittance = {
       id,
       createdAtMs: Date.now(),
+      expiresAtMs: Date.now() + 72 * 60 * 60 * 1000,
       status: 'CREATED',
       ...input,
     }
@@ -88,6 +90,11 @@ export class RemittanceStore {
     const rem = this.getByClaimToken(token)
     if (!rem) return null
     if (rem.status !== 'CREATED') return rem
+    if (Date.now() > rem.expiresAtMs) {
+      rem.status = 'CANCELLED'
+      rem.cancelledAtMs = Date.now()
+      return null
+    }
     rem.status = 'CLAIMED'
     rem.claimedAtMs = Date.now()
     return rem

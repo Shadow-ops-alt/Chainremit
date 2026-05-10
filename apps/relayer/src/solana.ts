@@ -8,6 +8,7 @@ import {
   VersionedTransaction,
   clusterApiUrl,
 } from '@solana/web3.js'
+import { parseRelayerKeypair } from './keypair.js'
 
 const PROGRAM_ID = new PublicKey('2AeboQZoaSyBoC2YRcVHvL9CYh5embbddQ6pFubCKdoZ')
 
@@ -45,24 +46,6 @@ class NodeWallet implements Wallet {
   async signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
     return Promise.all(txs.map((tx) => this.signTransaction(tx)))
   }
-}
-
-function parseRelayerKeypair() {
-  const raw = process.env.RELAYER_PRIVATE_KEY
-  if (!raw) {
-    return null
-  }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    throw new Error('RELAYER_PRIVATE_KEY must be valid JSON array')
-  }
-  if (!Array.isArray(parsed)) {
-    throw new Error('RELAYER_PRIVATE_KEY must be a JSON array')
-  }
-  const secret = Uint8Array.from(parsed as number[])
-  return Keypair.fromSecretKey(secret)
 }
 
 function decodeClaimToken(claimToken: string) {
