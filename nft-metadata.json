@@ -1,0 +1,11 @@
+{
+  "name": "ChainRemit Receipt",
+  "symbol": "CRMIT",
+  "description": "Proof of remittance transfer via ChainRemit on Solana.",
+  "image": "https://raw.githubusercontent.com/Shadow-ops-alt/chainremit/main/nft-cover.png",
+  "attributes": [],
+  "properties": {
+    "files": [],
+    "category": "image"
+  }
+}
