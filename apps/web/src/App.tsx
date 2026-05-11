@@ -200,7 +200,8 @@ const Icon = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const base = import.meta.env.VITE_RELAYER_URL ?? ""
+  const res = await fetch(base + path, {
     ...init,
     headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
   })
