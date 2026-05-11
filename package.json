@@ -19,6 +19,7 @@
     "dev:web": "npm -w apps/web run dev",
     "dev:relayer": "npm -w apps/relayer run dev",
     "build": "npm -w apps/relayer run build && npm -w apps/web run build",
+    "build:web": "npm -w apps/web run build",
     "lint": "npm -w apps/relayer run lint && npm -w apps/web run lint"
   }
 }
